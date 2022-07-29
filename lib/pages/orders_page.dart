@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shop/components/app_drawer.dart';
+import 'package:shop/components/order.dart';
+import 'package:shop/models/order.dart';
 import 'package:shop/models/order_list.dart';
 
 class OrdersPage extends StatelessWidget {
@@ -16,8 +18,8 @@ class OrdersPage extends StatelessWidget {
       drawer: AppDrawer(),
       body: ListView.builder(
         itemCount: orders.itemsCount,
-        itemBuilder: (ctx, i) => Text(
-          orders.items[i].total.toString(),
+        itemBuilder: (ctx, i) => OrderWidget(
+          order: orders.items[i],
         ),
       ),
     );
