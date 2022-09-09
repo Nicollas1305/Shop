@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shop/exceptions/auth_exception.dart';
+import 'package:shop/models/auth.dart';
 
-import '../models/auth.dart';
-
-enum AuthMode { Signup, Login }
+enum AuthMode { signup, login }
 
 class AuthForm extends StatefulWidget {
   const AuthForm({Key? key}) : super(key: key);
@@ -17,21 +16,21 @@ class _AuthFormState extends State<AuthForm> {
   final _passwordController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
   bool _isLoading = false;
-  AuthMode _authMode = AuthMode.Login;
-  Map<String, String> _authData = {
+  AuthMode _authMode = AuthMode.login;
+  final Map<String, String> _authData = {
     'email': '',
     'password': '',
   };
 
-  bool _isLogin() => _authMode == AuthMode.Login;
-  bool _isSignup() => _authMode == AuthMode.Signup;
+  bool _isLogin() => _authMode == AuthMode.login;
+  bool _isSignup() => _authMode == AuthMode.signup;
 
   void _switchAuthMode() {
     setState(() {
       if (_isLogin()) {
-        _authMode = AuthMode.Signup;
+        _authMode = AuthMode.signup;
       } else {
-        _authMode = AuthMode.Login;
+        _authMode = AuthMode.login;
       }
     });
   }
@@ -40,13 +39,13 @@ class _AuthFormState extends State<AuthForm> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text('Ocorreu um erro.'),
+        title: const Text('Ocorreo um Erro'),
         content: Text(msg),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: Text('Fechar'),
-          )
+            child: const Text('Fechar'),
+          ),
         ],
       ),
     );
@@ -66,11 +65,13 @@ class _AuthFormState extends State<AuthForm> {
 
     try {
       if (_isLogin()) {
+        // Login
         await auth.login(
           _authData['email']!,
           _authData['password']!,
         );
       } else {
+        // Registrar
         await auth.signup(
           _authData['email']!,
           _authData['password']!,
@@ -89,88 +90,89 @@ class _AuthFormState extends State<AuthForm> {
   Widget build(BuildContext context) {
     final deviceSize = MediaQuery.of(context).size;
     return Card(
+      elevation: 8,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(10),
       ),
-      elevation: 8,
       child: Container(
         padding: const EdgeInsets.all(16),
-        height: _isLogin() ? 320 : 400,
-        width: deviceSize.width * 0.85,
+        height: _isLogin() ? 310 : 400,
+        width: deviceSize.width * 0.75,
         child: Form(
-            key: _formKey,
-            child: Column(
-              children: [
+          key: _formKey,
+          child: Column(
+            children: [
+              TextFormField(
+                decoration: const InputDecoration(labelText: 'E-mail'),
+                keyboardType: TextInputType.emailAddress,
+                onSaved: (email) => _authData['email'] = email ?? '',
+                validator: (_email) {
+                  final email = _email ?? '';
+                  if (email.trim().isEmpty || !email.contains('@')) {
+                    return 'Informe um e-mail válido.';
+                  }
+                  return null;
+                },
+              ),
+              TextFormField(
+                decoration: const InputDecoration(labelText: 'Senha'),
+                keyboardType: TextInputType.emailAddress,
+                obscureText: true,
+                controller: _passwordController,
+                onSaved: (password) => _authData['password'] = password ?? '',
+                validator: (_password) {
+                  final password = _password ?? '';
+                  if (password.isEmpty || password.length < 5) {
+                    return 'Informe uma senha válida';
+                  }
+                  return null;
+                },
+              ),
+              if (_isSignup())
                 TextFormField(
-                  decoration: InputDecoration(labelText: 'Email'),
+                  decoration:
+                      const InputDecoration(labelText: 'Confirmar Senha'),
                   keyboardType: TextInputType.emailAddress,
-                  onSaved: (email) => _authData['email'] = email ?? '',
-                  validator: (_email) {
-                    final email = _email ?? '';
-                    if (email.trim().isEmpty || !email.contains('@')) {
-                      return 'Informe um email válido.';
-                    }
-                    return null;
-                  },
-                ),
-                TextFormField(
-                  decoration: const InputDecoration(labelText: 'Senha'),
-                  keyboardType: TextInputType.emailAddress,
-                  onSaved: (password) => _authData['password'] = password ?? '',
-                  controller: _passwordController,
                   obscureText: true,
-                  validator: _authMode == AuthMode.Login
+                  validator: _isLogin()
                       ? null
                       : (_password) {
                           final password = _password ?? '';
-                          if (password.isEmpty || password.length < 5) {
-                            return 'Informe uma senha válida';
+                          if (password != _passwordController.text) {
+                            return 'Senhas informadas não conferem.';
                           }
                           return null;
                         },
                 ),
-                if (_isSignup())
-                  TextFormField(
-                    decoration:
-                        const InputDecoration(labelText: 'Confirmar Senha'),
-                    keyboardType: TextInputType.emailAddress,
-                    obscureText: true,
-                    validator: _isLogin()
-                        ? null
-                        : (_password) {
-                            final password = _password ?? '';
-                            if (password != _passwordController.text) {
-                              return 'Senhas informadas não conferem.';
-                            }
-                            return null;
-                          },
-                  ),
-                const SizedBox(height: 20),
-                if (_isLoading)
-                  const CircularProgressIndicator()
-                else
-                  ElevatedButton(
-                    onPressed: _submit,
-                    child: Text(
-                      _authMode == AuthMode.Login ? 'ENTRAR' : 'REGISTRAR',
+              const SizedBox(height: 20),
+              if (_isLoading)
+                const CircularProgressIndicator()
+              else
+                ElevatedButton(
+                  onPressed: _submit,
+                  style: ElevatedButton.styleFrom(
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(30),
                     ),
-                    style: ElevatedButton.styleFrom(
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(30),
-                        ),
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 30,
-                          vertical: 8,
-                        )),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 30,
+                      vertical: 8,
+                    ),
                   ),
-                Spacer(),
-                TextButton(
-                  onPressed: _switchAuthMode,
                   child: Text(
-                      _isLogin() ? 'DESEJA REGISTRAR?' : 'JÁ POSSUI CONTA?'),
-                )
-              ],
-            )),
+                    _authMode == AuthMode.login ? 'ENTRAR' : 'REGISTRAR',
+                  ),
+                ),
+              const Spacer(),
+              TextButton(
+                onPressed: _switchAuthMode,
+                child: Text(
+                  _isLogin() ? 'DESEJA REGISTRAR?' : 'JÁ POSSUI CONTA?',
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

@@ -12,12 +12,13 @@ class ProductFormPage extends StatefulWidget {
 
 class _ProductFormPageState extends State<ProductFormPage> {
   final _priceFocus = FocusNode();
-  final _decriptionFocus = FocusNode();
+  final _descriptionFocus = FocusNode();
+
   final _imageUrlFocus = FocusNode();
   final _imageUrlController = TextEditingController();
 
   final _formKey = GlobalKey<FormState>();
-  final _formData = Map<String, Object>();
+  final _formData = <String, Object>{};
 
   bool _isLoading = false;
 
@@ -51,9 +52,10 @@ class _ProductFormPageState extends State<ProductFormPage> {
   void dispose() {
     super.dispose();
     _priceFocus.dispose();
-    _decriptionFocus.dispose();
-    _imageUrlFocus.dispose();
+    _descriptionFocus.dispose();
+
     _imageUrlFocus.removeListener(updateImage);
+    _imageUrlFocus.dispose();
   }
 
   void updateImage() {
@@ -80,8 +82,10 @@ class _ProductFormPageState extends State<ProductFormPage> {
     setState(() => _isLoading = true);
 
     try {
-      await Provider.of<ProductList>(context, listen: false)
-          .saveProduct(_formData);
+      await Provider.of<ProductList>(
+        context,
+        listen: false,
+      ).saveProduct(_formData);
 
       Navigator.of(context).pop();
     } catch (error) {
@@ -89,11 +93,12 @@ class _ProductFormPageState extends State<ProductFormPage> {
         context: context,
         builder: (ctx) => AlertDialog(
           title: const Text('Ocorreu um erro!'),
-          content: const Text('Ocorreu um erro ao salvar o produto.'),
+          content: const Text('Ocorreu um erro para salvar o produto.'),
           actions: [
             TextButton(
-                onPressed: () => Navigator.of(context).pop(),
-                child: const Text('OK')),
+              child: const Text('Ok'),
+              onPressed: () => Navigator.of(context).pop(),
+            ),
           ],
         ),
       );
@@ -106,18 +111,18 @@ class _ProductFormPageState extends State<ProductFormPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Formulário criar produto'),
+        title: const Text('Formulário de Produto'),
         actions: [
           IconButton(
-            onPressed: () {
-              _submitForm();
-            },
+            onPressed: _submitForm,
             icon: const Icon(Icons.save),
           )
         ],
       ),
       body: _isLoading
-          ? Center(child: CircularProgressIndicator())
+          ? const Center(
+              child: CircularProgressIndicator(),
+            )
           : Padding(
               padding: const EdgeInsets.all(15),
               child: Form(
@@ -135,10 +140,10 @@ class _ProductFormPageState extends State<ProductFormPage> {
                       validator: (_name) {
                         final name = _name ?? '';
                         if (name.trim().isEmpty) {
-                          return 'Nome é Obrigatório';
+                          return 'Nome é obrigatório.';
                         }
                         if (name.trim().length < 3) {
-                          return 'Nome precisa no mínimo de 3 letras';
+                          return 'Nome precisa no mínimo de 3 letras.';
                         }
                         return null;
                       },
@@ -148,39 +153,45 @@ class _ProductFormPageState extends State<ProductFormPage> {
                       decoration: const InputDecoration(labelText: 'Preço'),
                       textInputAction: TextInputAction.next,
                       focusNode: _priceFocus,
-                      keyboardType:
-                          const TextInputType.numberWithOptions(decimal: true),
+                      keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true,
+                        signed: true,
+                      ),
                       onFieldSubmitted: (_) {
-                        FocusScope.of(context).requestFocus(_decriptionFocus);
+                        FocusScope.of(context).requestFocus(_descriptionFocus);
                       },
                       onSaved: (price) =>
                           _formData['price'] = double.parse(price ?? '0'),
                       validator: (_price) {
                         final priceString = _price ?? '';
                         final price = double.tryParse(priceString) ?? -1;
+
                         if (price <= 0) {
-                          'Informe um preço Válido.';
+                          return 'Informe um preço válido.';
                         }
+
                         return null;
                       },
                     ),
                     TextFormField(
                       initialValue: _formData['description']?.toString(),
                       decoration: const InputDecoration(labelText: 'Descrição'),
-                      textInputAction: TextInputAction.next,
-                      focusNode: _decriptionFocus,
+                      focusNode: _descriptionFocus,
                       keyboardType: TextInputType.multiline,
                       maxLines: 3,
                       onSaved: (description) =>
                           _formData['description'] = description ?? '',
                       validator: (_description) {
                         final description = _description ?? '';
+
                         if (description.trim().isEmpty) {
-                          return 'Descrição é Obrigatório';
+                          return 'Descrição é obrigatória.';
                         }
-                        if (description.trim().length < 15) {
-                          return ' precisa no mínimo de 15 letras';
+
+                        if (description.trim().length < 10) {
+                          return 'Descrição precisa no mínimo de 10 letras.';
                         }
+
                         return null;
                       },
                     ),
@@ -190,11 +201,11 @@ class _ProductFormPageState extends State<ProductFormPage> {
                         Expanded(
                           child: TextFormField(
                             decoration: const InputDecoration(
-                                labelText: 'URL da Imagem'),
+                                labelText: 'Url da Imagem'),
+                            keyboardType: TextInputType.url,
                             textInputAction: TextInputAction.done,
                             focusNode: _imageUrlFocus,
                             controller: _imageUrlController,
-                            keyboardType: TextInputType.url,
                             onFieldSubmitted: (_) => _submitForm(),
                             onSaved: (imageUrl) =>
                                 _formData['imageUrl'] = imageUrl ?? '',
@@ -202,8 +213,9 @@ class _ProductFormPageState extends State<ProductFormPage> {
                               final imageUrl = _imageUrl ?? '';
 
                               if (!isValidImageUrl(imageUrl)) {
-                                return 'Informe uma URL válida';
+                                return 'Informe uma Url válida!';
                               }
+
                               return null;
                             },
                           ),
@@ -223,9 +235,9 @@ class _ProductFormPageState extends State<ProductFormPage> {
                           ),
                           alignment: Alignment.center,
                           child: _imageUrlController.text.isEmpty
-                              ? const Text('Informe a URL')
+                              ? const Text('Informe a Url')
                               : Image.network(_imageUrlController.text),
-                        )
+                        ),
                       ],
                     ),
                   ],

@@ -6,10 +6,7 @@ import 'package:shop/models/cart_item.dart';
 class CartItemWidget extends StatelessWidget {
   final CartItem cartItem;
 
-  const CartItemWidget(
-    this.cartItem, {
-    Key? key,
-  }) : super(key: key);
+  const CartItemWidget(this.cartItem, {Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -18,43 +15,46 @@ class CartItemWidget extends StatelessWidget {
       direction: DismissDirection.endToStart,
       background: Container(
         color: Theme.of(context).errorColor,
-        child: Icon(
-          Icons.delete,
-          color: Colors.white,
-          size: 30,
-        ),
         alignment: Alignment.centerRight,
         padding: const EdgeInsets.only(right: 20),
         margin: const EdgeInsets.symmetric(
           horizontal: 15,
           vertical: 4,
         ),
+        child: const Icon(
+          Icons.delete,
+          color: Colors.white,
+          size: 40,
+        ),
       ),
       confirmDismiss: (_) {
         return showDialog<bool>(
-            context: context,
-            builder: (ctx) => AlertDialog(
-                  title: Text('Tem Certeza?'),
-                  content: Text('Deseja remover o item do carrinho?'),
-                  actions: [
-                    TextButton(
-                      onPressed: () {
-                        Navigator.of(ctx).pop(false);
-                      },
-                      child: Text('Não'),
-                    ),
-                    TextButton(
-                      onPressed: () {
-                        Navigator.of(ctx).pop(true);
-                      },
-                      child: Text('Sim'),
-                    ),
-                  ],
-                ));
+          context: context,
+          builder: (ctx) => AlertDialog(
+            title: const Text('Tem Certeza?'),
+            content: const Text('Quer remover o item do carrinho?'),
+            actions: [
+              TextButton(
+                child: const Text('Não'),
+                onPressed: () {
+                  Navigator.of(ctx).pop(false);
+                },
+              ),
+              TextButton(
+                child: const Text('Sim'),
+                onPressed: () {
+                  Navigator.of(ctx).pop(true);
+                },
+              ),
+            ],
+          ),
+        );
       },
       onDismissed: (_) {
-        Provider.of<Cart>(context, listen: false)
-            .removeItem(cartItem.productId);
+        Provider.of<Cart>(
+          context,
+          listen: false,
+        ).removeItem(cartItem.productId);
       },
       child: Card(
         margin: const EdgeInsets.symmetric(
@@ -65,6 +65,8 @@ class CartItemWidget extends StatelessWidget {
           padding: const EdgeInsets.all(8),
           child: ListTile(
             leading: CircleAvatar(
+              backgroundColor: Theme.of(context).colorScheme.primary,
+              foregroundColor: Colors.white,
               child: Padding(
                 padding: const EdgeInsets.all(5),
                 child: FittedBox(
@@ -73,7 +75,7 @@ class CartItemWidget extends StatelessWidget {
               ),
             ),
             title: Text(cartItem.name),
-            subtitle: Text('Total:  R\$ ${cartItem.price * cartItem.quantity}'),
+            subtitle: Text('Total: R\$ ${cartItem.price * cartItem.quantity}'),
             trailing: Text('${cartItem.quantity}x'),
           ),
         ),

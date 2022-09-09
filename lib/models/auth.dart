@@ -1,16 +1,37 @@
 import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shop/exceptions/auth_exception.dart';
+import 'package:shop/utils/constants.dart';
 
 class Auth with ChangeNotifier {
-  static const _url =
-      'https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=AIzaSyDb4kAl2-TMMNcmuAE4tc-csflt9J05aBg';
+  String? _token;
+  String? _email;
+  String? _userId;
+  DateTime? _expiryDate;
+
+  bool get isAuth {
+    final isValid = _expiryDate?.isAfter(DateTime.now()) ?? false;
+    return _token != null && isValid;
+  }
+
+  String? get token {
+    return isAuth ? _token : null;
+  }
+
+  String? get email {
+    return isAuth ? _email : null;
+  }
+
+  String? get userId {
+    return isAuth ? _userId : null;
+  }
 
   Future<void> _authenticate(
       String email, String password, String urlFragment) async {
     final url =
-        'https://identitytoolkit.googleapis.com/v1/accounts:$urlFragment?key=AIzaSyDb4kAl2-TMMNcmuAE4tc-csflt9J05aBg';
+        'https://identitytoolkit.googleapis.com/v1/accounts:$urlFragment?key=${Constants.webApiKey}';
     final response = await http.post(
       Uri.parse(url),
       body: jsonEncode({
@@ -19,13 +40,23 @@ class Auth with ChangeNotifier {
         'returnSecureToken': true,
       }),
     );
+
     final body = jsonDecode(response.body);
 
     if (body['error'] != null) {
       throw AuthException(body['error']['message']);
-    }
+    } else {
+      _token = body['idToken'];
+      _email = body['email'];
+      _userId = body['localId'];
 
-    print(body);
+      _expiryDate = DateTime.now().add(
+        Duration(
+          seconds: int.parse(body['expiresIn']),
+        ),
+      );
+      notifyListeners();
+    }
   }
 
   Future<void> signup(String email, String password) async {
